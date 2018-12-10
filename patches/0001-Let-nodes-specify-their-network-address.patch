@@ -1,0 +1,47 @@
+From 103024ab6d1ea8446f47b5d37623fdcd02ffa46b Mon Sep 17 00:00:00 2001
+From: Matt Hardcastle <m@hardcastle.com>
+Date: Fri, 7 Dec 2018 20:52:58 -0800
+Subject: [PATCH] Let nodes specify their network address
+
+Nodes running in containers that proxy their network traffic don't know
+their real "local" address, they are informed of it by their
+orchestration system. This change lets nodes in the situation previously
+described set their own local address.
+---
+ libraries/networking/src/LimitedNodeList.cpp | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/libraries/networking/src/LimitedNodeList.cpp b/libraries/networking/src/LimitedNodeList.cpp
+index 37b914143e..3166d9c128 100644
+--- a/libraries/networking/src/LimitedNodeList.cpp
++++ b/libraries/networking/src/LimitedNodeList.cpp
+@@ -1117,7 +1117,26 @@ void LimitedNodeList::stopInitialSTUNUpdate(bool success) {
+     stunOccasionalTimer->start(STUN_IP_ADDRESS_CHECK_INTERVAL_MSECS);
+ }
+
++#include <QProcess>
++static bool using_local_addr_env = false;
++
+ void LimitedNodeList::updateLocalSocket() {
++    // Let nodes running in a Docker containers and in other "interesting"
++    // network environments specify their own local address.
++    if (using_local_addr_env) return;
++    const QString LOCAL_ADDR_ENV = "HIFI_LOCAL_ADDR";
++    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
++    QString local_addr_str = env.value(LOCAL_ADDR_ENV);
++    if (!local_addr_str.isEmpty()) {
++        QHostAddress local_addr {local_addr_str};
++        if (local_addr != QHostAddress::Null) {
++            qCInfo(networking) << "Set local address from HIFI_LOCAL_ADDR";
++            setLocalSocket({local_addr, _nodeSocket.localPort()});
++            using_local_addr_env = true;
++            return;
++        }
++    }
++
+     // when update is called, if the local socket is empty then start with the guessed local socket
+     if (_localSockAddr.isNull()) {
+         setLocalSocket(HifiSockAddr { getGuessedLocalAddress(), _nodeSocket.localPort() });
+--
+2.19.2
+
