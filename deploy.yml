@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: assignment-client-poc
+  labels:
+    foo: assignment-client
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        foo: assignment-client
+    spec:
+      containers:
+      - name: assignment-client
+        image: highfidelity/assignment-client:latest
+        command: ["/usr/local/bin/assignment-client", "-a", "kitchen.highfidelity.io"]
+      restartPolicy: Always
