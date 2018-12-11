@@ -1,0 +1,33 @@
+FROM highfidelity/build-base:latest
+
+# Build assignment-client
+RUN cmake ..
+RUN make -j8 assignment-client
+
+WORKDIR $HIFI_SRC_ROOT
+COPY patches/*.patch ./
+RUN git apply *.patch
+RUN git status
+
+# TODO: the number of procs to use should depend on the actual hardware
+WORKDIR $HIFI_SRC_ROOT/build
+RUN make -j4 assignment-client && \
+    strip assignment-client/assignment-client
+
+# Collect all of assignment-client's dependencies
+RUN mkdir /tmp/libs && \
+    for l in $(ldd assignment-client/assignment-client | awk '$3 != "" { print $3 }'); \
+    do cp $l /tmp/libs/; done
+
+FROM ubuntu:18.04
+
+COPY --from=build /tmp/libs/* /usr/local/lib/
+COPY --from=build /usr/local/src/hifi/build/assignment-client/assignment-client /usr/local/bin/
+RUN ldconfig /usr/local/lib
+
+RUN adduser --disabled-password --gecos '' hifi
+USER hifi
+WORKDIR /
+
+CMD ["/usr/local/bin/assignment-client"]
+ENTRYPOINT ["/usr/local/bin/assignment-client"]
