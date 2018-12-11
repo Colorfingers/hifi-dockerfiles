@@ -10,6 +10,7 @@ ENV QT_PREFIX="/usr/local/Qt${QT_VERSION}/${QT_VERSION}/gcc_64"
 ENV QT_CMAKE_PREFIX_PATH="${QT_PREFIX}/lib/cmake"
 ENV PATH="${QT_PREFIX}/bin:${BIN_DIR}:${PATH}"
 ENV HIFI_SRC_ROOT=${SRC_DIR}/hifi
+ENV GIT_TAG=v0.76.0
 
 # Update apt's package definitions
 RUN apt-get update
@@ -28,8 +29,9 @@ RUN apt-get -y install \
     libxtst6 python python3 wget zlib1g-dev
 
 # Check out the latest HEAD of High Fidelity.
+RUN printenv
 RUN mkdir -p ${HIFI_SRC_ROOT} && \
-    git clone https://github.com/highfidelity/hifi.git $HIFI_SRC_ROOT && \
+    git clone --branch $GIT_TAG --depth 1 https://github.com/highfidelity/hifi.git $HIFI_SRC_ROOT && \
     mkdir -p $HIFI_SRC_ROOT/build
 WORKDIR $HIFI_SRC_ROOT/build
 

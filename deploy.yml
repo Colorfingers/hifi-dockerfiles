@@ -5,7 +5,7 @@ metadata:
   labels:
     foo: assignment-client
 spec:
-  replicas: 3
+  replicas: 7
   strategy:
     type: RollingUpdate
   template:
@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: assignment-client
-        image: highfidelity/assignment-client:latest
+        image: highfidelity/assignement-client:v0.76.0
         command: ["/usr/local/bin/assignment-client", "-a", "kitchen.highfidelity.io"]
       restartPolicy: Always
