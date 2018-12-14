@@ -1,16 +1,16 @@
-FROM highfidelity/build-base:latest
-
-# Build assignment-client
-RUN cmake ..
-RUN make -j8 assignment-client
+FROM highfidelity/build-base:latest as build
 
 WORKDIR $HIFI_SRC_ROOT
 COPY patches/*.patch ./
 RUN git apply *.patch
 RUN git status
 
-# TODO: the number of procs to use should depend on the actual hardware
+ENV RELEASE_TYPE DEV
+ENV STABLE_BUILD 0
+ENV STABLE_VERSION $LATEST_RELEASE_TAG
+ENV RELEASE_NUMBER 0.76.0
 WORKDIR $HIFI_SRC_ROOT/build
+RUN cmake ..
 RUN make -j4 assignment-client && \
     strip assignment-client/assignment-client
 
